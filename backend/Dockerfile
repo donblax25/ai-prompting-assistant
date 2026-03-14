@@ -1,5 +1,6 @@
 # ---- Base Image ----
-FROM node:20-alpine AS base
+FROM node:20-slim AS base
+RUN apt-get update -y && apt-get install -y openssl
 WORKDIR /app
 
 # ---- Dependencies ----
