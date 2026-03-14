@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: ai-prompt-backend
+    env: docker
+    region: oregon # Render region (update as needed)
+    plan: starter # Starter plan
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        sync: false # Set securely in Render dashboard
+      - key: OPENAI_API_KEY
+        sync: false # Set securely in Render dashboard
+      - key: NODE_ENV
+        value: production

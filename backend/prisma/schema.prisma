@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id               String            @id @default(uuid())
+  email            String            @unique
+  name             String?
+  createdAt        DateTime          @default(now())
+  workspaces       Workspace[]
+  workspaceMembers WorkspaceMember[]
+}
+
+model Workspace {
+  id        String            @id @default(uuid())
+  name      String
+  ownerId   String
+  owner     User              @relation(fields: [ownerId], references: [id])
+  members   WorkspaceMember[]
+  templates Template[]
+  abTests   AbTest[]
+}
+
+model WorkspaceMember {
+  workspaceId String
+  userId      String
+  role        String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@id([workspaceId, userId])
+}
+
+model Template {
+  id          String            @id @default(uuid())
+  workspaceId String
+  name        String
+  description String?
+  isWorkflow  Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  workspace   Workspace         @relation(fields: [workspaceId], references: [id])
+  versions    TemplateVersion[]
+  steps       WorkflowStep[]    @relation("ParentTemplate")
+  childSteps  WorkflowStep[]    @relation("ChildTemplate")
+}
+
+model TemplateVersion {
+  id              String          @id @default(uuid())
+  templateId      String
+  versionNumber   Int
+  blocks          String          // Stored as JSON string
+  variables       String?         // Stored as JSON string
+  createdBy       String
+  createdAt       DateTime        @default(now())
+  template        Template        @relation(fields: [templateId], references: [id])
+  abTestResults   AbTestResult[]
+}
+
+model WorkflowStep {
+  id               String   @id @default(uuid())
+  parentTemplateId String
+  stepOrder        Int
+  childTemplateId  String
+  modelAlias       String
+  parentTemplate   Template @relation("ParentTemplate", fields: [parentTemplateId], references: [id])
+  childTemplate    Template @relation("ChildTemplate", fields: [childTemplateId], references: [id])
+}
+
+model AbTest {
+  id               String         @id @default(uuid())
+  workspaceId      String
+  name             String
+  contextVariables String?        // JSON string
+  workspace        Workspace      @relation(fields: [workspaceId], references: [id])
+  results          AbTestResult[]
+}
+
+model AbTestResult {
+  id                String          @id @default(uuid())
+  testId            String
+  templateVersionId String
+  aiOutput          String
+  userRating        Int?
+  executedAt        DateTime        @default(now())
+  test              AbTest          @relation(fields: [testId], references: [id])
+  templateVersion   TemplateVersion @relation(fields: [templateVersionId], references: [id])
+}
